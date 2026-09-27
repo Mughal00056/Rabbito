@@ -11,8 +11,7 @@ export const DynamicSections: React.FC = () => {
     openSectionAllView,
     setQuickViewProduct,
     addToCart,
-    cart,
-    getProductRatingStats
+    cart
   } = useStore();
 
   const filterProducts = (filter: string): Product[] => {
@@ -46,7 +45,6 @@ export const DynamicSections: React.FC = () => {
 
   const renderProductCard = (p: Product, isHorizontal: boolean) => {
     const inCart = cart.some((i) => i.id === p.id);
-    const stats = getProductRatingStats(p.id);
 
     if (isHorizontal) {
       return (
@@ -79,10 +77,8 @@ export const DynamicSections: React.FC = () => {
               <div className="text-xs font-black text-white leading-snug mb-1 line-clamp-2 min-h-[32px] group-hover:text-purple-300 transition-colors break-words">
                 {p.name}
               </div>
-              <div className="flex items-center gap-1.5 mb-1.5 text-[11px]">
-                <i className="fa-solid fa-star text-amber-400 text-[10px]" />
-                <span className="text-purple-200 font-extrabold">{stats.average.toFixed(1)}</span>
-                <span className="text-purple-400/60 text-[10px]">({stats.count})</span>
+              <div className="text-[10px] text-purple-400 font-bold uppercase tracking-wider mb-1">
+                {p.category}
               </div>
               <div className="text-sm font-black text-purple-300 mb-2 truncate">
                 {formatPKR(p.price)}
@@ -149,10 +145,8 @@ export const DynamicSections: React.FC = () => {
             <div className="text-xs sm:text-sm font-black text-white leading-snug mb-1.5 line-clamp-2 min-h-[34px] group-hover:text-purple-300 transition-colors break-words">
               {p.name}
             </div>
-            <div className="flex items-center gap-1.5 mb-2 text-[11px]">
-              <i className="fa-solid fa-star text-amber-400 text-[10px]" />
-              <span className="text-purple-200 font-extrabold">{stats.average.toFixed(1)}</span>
-              <span className="text-purple-400/60 text-[10px]">({stats.count} reviews)</span>
+            <div className="text-[10px] text-purple-400 font-bold uppercase tracking-wider mb-2">
+              {p.category}
             </div>
             <div className="text-base font-black text-purple-300 mb-2.5 truncate">
               {formatPKR(p.price)}

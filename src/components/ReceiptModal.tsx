@@ -13,6 +13,9 @@ export const ReceiptModal: React.FC = () => {
 
   if (!receiptOrder) return null;
 
+  const isVerified = receiptOrder.status === 'verified';
+  const isPending = receiptOrder.status === 'pending' || receiptOrder.status === 'processing';
+
   const dt = new Date(receiptOrder.createdAt || Date.now());
   const dateFormatted = dt.toLocaleString('en-PK', {
     day: '2-digit',
@@ -27,12 +30,13 @@ export const ReceiptModal: React.FC = () => {
     setDownloading(true);
 
     try {
-      // Fire confetti celebration
-      confetti({
-        particleCount: 60,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
+      if (isVerified) {
+        confetti({
+          particleCount: 60,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
 
       const canvas = await html2canvas(receiptRef.current, {
         scale: 2,
@@ -43,10 +47,10 @@ export const ReceiptModal: React.FC = () => {
       });
 
       const link = document.createElement('a');
-      link.download = `ApexStore_Receipt_${String(receiptOrder.id).slice(-8)}.png`;
+      link.download = `ApexStore_Slip_${String(receiptOrder.id).slice(-8)}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
-      showToast('Receipt downloaded successfully!');
+      showToast('Slip downloaded successfully!');
     } catch {
       showToast('Download failed. Please try again.', 'error');
     } finally {
@@ -60,7 +64,11 @@ export const ReceiptModal: React.FC = () => {
         {/* Printable Receipt Card */}
         <div ref={receiptRef} className="bg-white rounded-3xl overflow-hidden shadow-2xl relative text-slate-800">
           {/* Header */}
-          <div className="bg-gradient-to-br from-purple-950 via-purple-700 to-fuchsia-600 p-6 sm:p-7 text-white relative overflow-hidden">
+          <div className={`p-6 sm:p-7 text-white relative overflow-hidden ${
+            isVerified 
+              ? 'bg-gradient-to-br from-purple-950 via-purple-700 to-emerald-600'
+              : 'bg-gradient-to-br from-purple-950 via-purple-800 to-amber-700'
+          }`}>
             <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
             <div className="flex items-center justify-between mb-4 relative z-10">
@@ -83,25 +91,47 @@ export const ReceiptModal: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 bg-emerald-500 text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md">
-                <i className="fa-solid fa-check-circle text-[10px]" />
-                <span>Verified</span>
-              </div>
+              {isVerified ? (
+                <div className="flex items-center gap-1.5 bg-emerald-500 text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md">
+                  <i className="fa-solid fa-check-circle text-[10px]" />
+                  <span>Verified</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 bg-amber-400 text-black px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md animate-pulse">
+                  <i className="fa-solid fa-clock text-[10px]" />
+                  <span>Pending Approval</span>
+                </div>
+              )}
             </div>
 
             <div className="text-center pt-2 relative z-10">
-              <div className="text-2xl font-black tracking-tight mb-1">Payment Receipt</div>
+              <div className="text-2xl font-black tracking-tight mb-1">
+                {isVerified ? 'Payment Receipt' : 'Order Confirmation Slip'}
+              </div>
               <div className="text-[11px] font-semibold opacity-90 tracking-wide">
-                Order Confirmation Transcript
+                {isVerified ? 'Official Verified Transcript' : 'Payment Submitted • Under Review'}
               </div>
               <div className="w-12 h-12 mx-auto mt-3 rounded-full bg-black/30 backdrop-blur border-2 border-white/40 flex items-center justify-center text-white text-xl">
-                <i className="fa-solid fa-check" />
+                <i className={`fa-solid ${isVerified ? 'fa-check' : 'fa-hourglass-half'}`} />
               </div>
             </div>
           </div>
 
           {/* Body */}
           <div className="p-5 sm:p-6 bg-white space-y-4">
+            {/* Pending Notice Box if not verified */}
+            {isPending && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-start gap-2.5 text-xs text-amber-900">
+                <i className="fa-solid fa-circle-exclamation text-amber-600 mt-0.5" />
+                <div className="leading-snug">
+                  <span className="font-extrabold block">Awaiting Manual Verification</span>
+                  <span className="text-[11px] text-amber-800">
+                    Your payment details have been sent to the store merchant. Auto-approval is disabled to ensure fraud protection.
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Meta Grid */}
             <div className="grid grid-cols-2 gap-2 text-left">
               <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-2.5">
@@ -115,7 +145,7 @@ export const ReceiptModal: React.FC = () => {
 
               <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-2.5">
                 <div className="text-[9px] font-black text-purple-700 uppercase tracking-wider">
-                  Date & Time
+                  Date &amp; Time
                 </div>
                 <div className="text-xs font-black text-slate-900 mt-0.5 truncate">
                   {dateFormatted}
@@ -147,7 +177,7 @@ export const ReceiptModal: React.FC = () => {
                 <span className="w-1 h-3 bg-purple-600 rounded-full" />
                 <span>Ordered Products</span>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-48 overflow-y-auto">
                 {receiptOrder.items.map((item, idx) => (
                   <div
                     key={idx}
@@ -193,7 +223,7 @@ export const ReceiptModal: React.FC = () => {
               )}
 
               <div className="flex justify-between items-baseline pt-2 border-t border-dashed border-purple-300">
-                <span className="font-black text-sm text-slate-900">Total Paid</span>
+                <span className="font-black text-sm text-slate-900">Total</span>
                 <span className="text-xl font-black text-purple-800">
                   {formatPKR(receiptOrder.total)}
                 </span>
@@ -203,10 +233,12 @@ export const ReceiptModal: React.FC = () => {
             {/* Footer */}
             <div className="text-center pt-2 border-t border-purple-100">
               <div className="text-sm font-black text-purple-700 mb-1">
-                Thank you for your order! 🎉
+                {isVerified ? 'Order Confirmed & Approved 🎉' : 'Order Submitted Successfully!'}
               </div>
               <div className="text-[10px] text-slate-500 font-semibold leading-relaxed">
-                Your payment has been verified successfully.<br />Please keep this receipt for your records.
+                {isVerified
+                  ? 'Your payment has been manually verified by ApexStore.\nYour delivery will be initiated promptly.'
+                  : 'Your payment slip is undergoing manual merchant verification.\nPlease keep this slip for your reference.'}
               </div>
               <div className="inline-flex items-center gap-1 mt-2 text-[10px] font-extrabold text-purple-700">
                 <i className="fa-solid fa-bag-shopping text-purple-600" />
@@ -225,7 +257,7 @@ export const ReceiptModal: React.FC = () => {
             className="flex-1 bg-gradient-to-r from-purple-700 to-fuchsia-600 hover:from-purple-600 hover:to-fuchsia-500 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-purple-900/50 transition cursor-pointer active:scale-[0.98] disabled:opacity-75"
           >
             <i className={`fa-solid ${downloading ? 'fa-spinner fa-spin' : 'fa-download'}`} />
-            <span>{downloading ? 'Preparing...' : 'Download'}</span>
+            <span>{downloading ? 'Preparing...' : 'Download Slip'}</span>
           </button>
 
           <button

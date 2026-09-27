@@ -205,7 +205,7 @@ export const INITIAL_ANNOUNCEMENT: AnnouncementSettings = {
   promoCode: 'PREMIUM20',
   shipping: 'Free shipping over Rs. 5000',
   newArrivals: 'New arrivals every Friday',
-  reviews: '4.9★ from 2k+ reviews'
+  reviews: '100% Genuine & Insured Delivery'
 };
 
 export const INITIAL_GALLERY_IMAGES: string[] = [
@@ -265,77 +265,5 @@ export const INITIAL_LAUNCH_CONFIG: LaunchConfig = {
   isRunning: true
 };
 
-export const INITIAL_REVIEWS: ProductReview[] = [
-  {
-    id: 'rev-101-1',
-    productId: 101,
-    userName: 'Hamza Khan',
-    rating: 5,
-    comment: 'The noise cancellation on the XM5 is unreal! Deep bass and crystal clear vocals. 100% authentic product delivered in 2 days.',
-    date: '2026-09-24',
-    verifiedPurchase: true
-  },
-  {
-    id: 'rev-101-2',
-    productId: 101,
-    userName: 'Ayesha Tariq',
-    rating: 5,
-    comment: 'Super comfortable for all-day office meetings. Battery lasts almost an entire week. Worth every penny!',
-    date: '2026-09-20',
-    verifiedPurchase: true
-  },
-  {
-    id: 'rev-102-1',
-    productId: 102,
-    userName: 'Bilal Ahmed',
-    rating: 5,
-    comment: 'Bose spatial immersion mode makes acoustic tracks sound like you are right in the recording studio. Outstanding!',
-    date: '2026-09-22',
-    verifiedPurchase: true
-  },
-  {
-    id: 'rev-103-1',
-    productId: 103,
-    userName: 'Zainab Fatima',
-    rating: 5,
-    comment: 'Apple AirPods Max design is pure luxury. Seamless switching between MacBook and iPhone. ApexStore is my go-to store now.',
-    date: '2026-09-25',
-    verifiedPurchase: true
-  },
-  {
-    id: 'rev-201-1',
-    productId: 201,
-    userName: 'Daniyal Malik',
-    rating: 5,
-    comment: 'Apple Watch Ultra 2 titanium build is indestructible. The display is crazy bright under direct sunlight. Premium packing!',
-    date: '2026-09-21',
-    verifiedPurchase: true
-  },
-  {
-    id: 'rev-301-1',
-    productId: 301,
-    userName: 'Usman Ali',
-    rating: 5,
-    comment: 'Air Jordan 1 Chicago colorway is iconic. Leather quality is supple and stitching is flawless. High recommend ApexStore.',
-    date: '2026-09-23',
-    verifiedPurchase: true
-  },
-  {
-    id: 'rev-401-1',
-    productId: 401,
-    userName: 'Saad Farooq',
-    rating: 5,
-    comment: 'Original Ray-Ban polarized lenses. Cuts driving glare completely. Came with authentic leather case and warranty card.',
-    date: '2026-09-18',
-    verifiedPurchase: true
-  },
-  {
-    id: 'rev-501-1',
-    productId: 501,
-    userName: 'Omer Sheikh',
-    rating: 5,
-    comment: 'Keychron Q1 Pro is the king of mechanical keyboards. The acoustic gasket dampening produces such a satisfying deep clack!',
-    date: '2026-09-22',
-    verifiedPurchase: true
-  }
-];
+export const INITIAL_REVIEWS: ProductReview[] = [];
+

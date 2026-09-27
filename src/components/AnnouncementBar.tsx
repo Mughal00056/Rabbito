@@ -53,8 +53,8 @@ export const AnnouncementBar: React.FC = () => {
       <span className="text-purple-500/40 mx-2">|</span>
 
       <span className="flex items-center gap-1.5 whitespace-nowrap text-xs text-purple-300 px-2">
-        <i className="fa-solid fa-star text-purple-400" />
-        <span>{announcement.reviews}</span>
+        <i className="fa-solid fa-shield-halved text-purple-400" />
+        <span>100% Genuine &amp; Insured Delivery</span>
       </span>
 
       <span className="text-purple-500/40 mx-2">|</span>

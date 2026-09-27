@@ -214,13 +214,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   });
 
-  // Reviews State (Persisted)
+  // Reviews State (Cleared completely as requested)
   const [reviews, setReviews] = useState<ProductReview[]>(() => {
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_REVIEWS);
-      return saved ? JSON.parse(saved) : INITIAL_REVIEWS;
+      localStorage.removeItem(LOCAL_STORAGE_REVIEWS);
+      return [];
     } catch {
-      return INITIAL_REVIEWS;
+      return [];
     }
   });
 
@@ -608,7 +608,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setApprovalSecondsLeft(3);
   };
 
-  // Confirm payment: Instant automatic generation of proof & approval without blocking
+  // Confirm payment: Manual merchant verification flow (NO auto-approval)
   const confirmPayment = (details: {
     method: string;
     email: string;
@@ -636,13 +636,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       method: details.method,
       transactionId: effectiveTrxId,
       proofUrl: effectiveProof,
-      status: 'processing',
+      status: 'pending', // Strictly PENDING - Merchant manually approves!
       createdAt: new Date().toISOString()
     };
 
     setCurrentOrder(newOrder);
-    setOrderStatus('processing');
-    setApprovalSecondsLeft(3);
+    setOrderStatus('pending');
+    setReceiptOrder(newOrder); // Shows pending order slip to buyer
+    setPaymentModalOpen(false);
+    clearCart();
 
     // Save order in state & localStorage
     setOrders((prev) => [newOrder, ...prev]);
@@ -654,26 +656,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       body: JSON.stringify(newOrder)
     }).catch(() => {});
 
-    // Automatic approval generation: completes in 2.2 seconds into receipt!
-    setTimeout(() => {
-      confetti({
-        particleCount: 100,
-        spread: 80,
-        origin: { y: 0.6 }
-      });
-      const verifiedOrder: Order = { ...newOrder, status: 'verified' };
-      setCurrentOrder(verifiedOrder);
-      setOrderStatus('verified');
-      setReceiptOrder(verifiedOrder);
-      setPaymentModalOpen(false);
-      clearCart();
-      showToast('Payment Verified & Approved! Official Receipt Generated 🎉', 'success');
-
-      // Update stored orders
-      setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: 'verified' } : o))
-      );
-    }, 2200);
+    showToast(`Order #${String(orderId).slice(-6)} submitted! Awaiting manual merchant approval.`, 'info');
   };
 
   // Admin action: updates an order's status

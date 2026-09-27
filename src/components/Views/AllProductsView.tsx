@@ -95,10 +95,8 @@ export const AllProductsView: React.FC = () => {
                     <h3 className="text-xs sm:text-sm font-black text-white line-clamp-2 mb-1.5 min-h-[32px] group-hover:text-purple-300 transition-colors break-words">
                       {p.name}
                     </h3>
-                    <div className="flex items-center gap-1.5 mb-2 text-[11px]">
-                      <i className="fa-solid fa-star text-amber-400 text-[10px]" />
-                      <span className="text-purple-200 font-extrabold">{p.rating || 4.8}</span>
-                      <span className="text-purple-400/60 text-[10px]">({p.reviews || 0})</span>
+                    <div className="text-[10px] text-purple-400 font-bold uppercase tracking-wider mb-2">
+                      {p.category}
                     </div>
                   </div>
 
