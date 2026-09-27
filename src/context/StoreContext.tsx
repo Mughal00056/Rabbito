@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import {
   Product,
   CartItem,
@@ -10,6 +11,7 @@ import {
   PaymentMethodsConfig,
   CustomPaymentMethod,
   Order,
+  OrderStatus,
   LaunchConfig
 } from '../types';
 import {
@@ -28,6 +30,13 @@ interface ToastMessage {
   id: string;
   message: string;
   type: 'success' | 'error' | 'info';
+}
+
+export interface FlyingParticle {
+  id: string;
+  x: number;
+  y: number;
+  image: string;
 }
 
 interface StoreContextType {
@@ -67,7 +76,7 @@ interface StoreContextType {
   appliedDiscount: number;
   discountAmount: number;
   cartTotal: number;
-  addToCart: (productId: number) => void;
+  addToCart: (productId: number, event?: React.MouseEvent) => void;
   updateCartQty: (productId: number, delta: number) => void;
   clearCart: () => void;
   applyPromoCode: (code: string) => boolean;
@@ -90,6 +99,15 @@ interface StoreContextType {
   reviewProduct: Product | null;
   setReviewProduct: (product: Product | null) => void;
 
+  // Admin Panel
+  adminModalOpen: boolean;
+  setAdminModalOpen: (open: boolean) => void;
+  orders: Order[];
+  updateOrderStatus: (orderId: number, status: OrderStatus, reason?: string) => void;
+  saveNewProduct: (prod: Product) => void;
+  savePromoCode: (promo: PromoCode) => void;
+  saveStoreInfo: (info: StoreInfo) => void;
+
   // Notifications
   notifications: StoreNotification[];
   readNotificationIds: string[];
@@ -101,7 +119,7 @@ interface StoreContextType {
   paymentConfig: PaymentMethodsConfig;
   customPaymentMethods: CustomPaymentMethod[];
   currentOrder: Order | null;
-  orderStatus: 'pending' | 'processing' | 'verified' | 'rejected';
+  orderStatus: OrderStatus;
   approvalSecondsLeft: number;
   startCheckout: () => void;
   confirmPayment: (details: {
@@ -112,15 +130,18 @@ interface StoreContextType {
     proofUrl: string;
   }) => void;
   cancelPayment: () => void;
+  manualApproveOrder: (orderId: number) => void;
 
-  // Toast
+  // Toast & Flying Animation
   toasts: ToastMessage[];
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  flyingParticles: FlyingParticle[];
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_CART = 'apex_cart';
+const LOCAL_STORAGE_ORDERS = 'apex_orders';
 const LOCAL_STORAGE_NOTIFS = 'apex_notifications';
 const LOCAL_STORAGE_READ_NOTIFS = 'apex_read_notifs';
 
@@ -159,12 +180,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
   const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
 
+  // Orders State (Persisted)
+  const [orders, setOrders] = useState<Order[]>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_ORDERS);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
   // Modals & Drawers
   const [sideMenuOpen, setSideMenuOpen] = useState<boolean>(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState<boolean>(false);
   const [notificationModalOpen, setNotificationModalOpen] = useState<boolean>(false);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState<boolean>(false);
+  const [adminModalOpen, setAdminModalOpen] = useState<boolean>(false);
   const [aiModalOpen, setAiModalOpen] = useState<boolean>(false);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
   const [reviewProduct, setReviewProduct] = useState<Product | null>(null);
@@ -190,8 +222,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Orders and Checkout State
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-  const [orderStatus, setOrderStatus] = useState<'pending' | 'processing' | 'verified' | 'rejected'>('pending');
+  const [orderStatus, setOrderStatus] = useState<OrderStatus>('pending');
   const [approvalSecondsLeft, setApprovalSecondsLeft] = useState<number>(300);
+
+  // Flying item particles
+  const [flyingParticles, setFlyingParticles] = useState<FlyingParticle[]>([]);
 
   // Toast System
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -208,26 +243,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_CART, JSON.stringify(cart));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [cart]);
+
+  // Sync orders to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_ORDERS, JSON.stringify(orders));
+    } catch {}
+  }, [orders]);
 
   // Sync notifications
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_NOTIFS, JSON.stringify(notifications));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [notifications]);
 
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_READ_NOTIFS, JSON.stringify(readNotificationIds));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [readNotificationIds]);
 
   // Launch countdown timer
@@ -242,7 +278,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => clearInterval(interval);
   }, [launchConfig.isRunning, launchConfig.mode]);
 
-  // Firebase Realtime DB sync with fallback
+  // Approval Countdown Timer (runs when order is pending or processing)
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (paymentModalOpen && (orderStatus === 'pending' || orderStatus === 'processing')) {
+      interval = setInterval(() => {
+        setApprovalSecondsLeft((prev) => (prev > 0 ? prev - 1 : 300));
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [paymentModalOpen, orderStatus]);
+
+  // Firebase Realtime DB sync & initial fetch
   useEffect(() => {
     const fetchFirebaseData = async () => {
       try {
@@ -294,8 +343,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (data.launchConfig) {
           setLaunchConfig(data.launchConfig);
         }
+        if (data.orders) {
+          const list = Array.isArray(data.orders) ? data.orders : Object.values(data.orders);
+          setOrders(list as Order[]);
+        }
       } catch {
-        // Fallback to initial seeds seamlessly
+        // Fallback gracefully
       }
     };
 
@@ -311,10 +364,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const discountAmount = cartSubtotal * appliedDiscount;
   const cartTotal = Math.max(0, cartSubtotal - discountAmount);
 
-  // Add to cart
-  const addToCart = (productId: number) => {
+  // Trigger Flying particle to cart icon
+  const triggerFlyParticle = (x: number, y: number, image: string) => {
+    const id = Date.now().toString() + Math.random().toString();
+    setFlyingParticles((prev) => [...prev, { id, x, y, image }]);
+    setTimeout(() => {
+      setFlyingParticles((prev) => prev.filter((p) => p.id !== id));
+    }, 750);
+  };
+
+  // Add to cart with optional flying animation
+  const addToCart = (productId: number, event?: React.MouseEvent) => {
     const product = products.find((p) => p.id === productId);
     if (!product) return;
+
+    if (event) {
+      triggerFlyParticle(event.clientX, event.clientY, product.image);
+    }
 
     setCart((prev) => {
       const existing = prev.find((item) => item.id === productId);
@@ -415,6 +481,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setOrderStatus('pending');
   };
 
+  // Confirm payment: Enters waiting state, starts 5-minute timer, but WAITS FOR ADMIN!
   const confirmPayment = (details: {
     method: string;
     email: string;
@@ -447,26 +514,78 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setOrderStatus('pending');
     setApprovalSecondsLeft(300);
 
-    // Push to Firebase RTDB in background
+    // Save order in state & localStorage
+    setOrders((prev) => [newOrder, ...prev]);
+
+    // Push to Firebase RTDB
     fetch('https://portfolio-art-2d73d-default-rtdb.firebaseio.com/apexstore/orders.json', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newOrder)
     }).catch(() => {});
 
-    // Live approval simulation progression: pending -> processing -> verified
-    setTimeout(() => {
-      setOrderStatus('processing');
-    }, 4500);
+    showToast('Payment submitted! Awaiting Admin verification.', 'info');
+    // Note: We DO NOT automatically verify via timeout! It waits for the Admin Panel to accept!
+  };
 
-    setTimeout(() => {
-      setOrderStatus('verified');
-      newOrder.status = 'verified';
-      setReceiptOrder(newOrder);
-      setPaymentModalOpen(false);
-      clearCart();
-      showToast('Payment verified successfully! 🎉');
-    }, 9000);
+  // Admin action: updates an order's status
+  const updateOrderStatus = (orderId: number, status: OrderStatus, reason?: string) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status } : o))
+    );
+
+    // If the affected order is the active customer order on screen:
+    if (currentOrder && currentOrder.id === orderId) {
+      setOrderStatus(status);
+
+      if (status === 'verified') {
+        confetti({
+          particleCount: 100,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+        const updated = { ...currentOrder, status: 'verified' as OrderStatus };
+        setCurrentOrder(updated);
+        setReceiptOrder(updated);
+        setPaymentModalOpen(false);
+        clearCart();
+        showToast('Payment Verified by Admin! 🎉', 'success');
+      } else if (status === 'rejected') {
+        showToast(`Order #${String(orderId).slice(-6)} was rejected by Admin${reason ? ': ' + reason : ''}`, 'error');
+      } else if (status === 'processing') {
+        showToast(`Order #${String(orderId).slice(-6)} is marked as Processing by Admin`, 'info');
+      }
+    } else {
+      showToast(`Order #${String(orderId).slice(-6)} marked as ${status}`);
+    }
+
+    // Sync to Firebase
+    fetch('https://portfolio-art-2d73d-default-rtdb.firebaseio.com/apexstore/orders.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orders.map((o) => (o.id === orderId ? { ...o, status } : o)))
+    }).catch(() => {});
+  };
+
+  // Quick manual approve for current active order
+  const manualApproveOrder = (orderId: number) => {
+    updateOrderStatus(orderId, 'verified');
+  };
+
+  // Admin store management functions
+  const saveNewProduct = (prod: Product) => {
+    setProducts((prev) => [prod, ...prev]);
+    showToast(`Added product: ${prod.name}`);
+  };
+
+  const savePromoCode = (promo: PromoCode) => {
+    setPromoCodes((prev) => [promo, ...prev]);
+    showToast(`Saved promo code: ${promo.code}`);
+  };
+
+  const saveStoreInfo = (info: StoreInfo) => {
+    setStoreInfo(info);
+    showToast('Updated store settings');
   };
 
   return (
@@ -519,12 +638,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setQuickViewProduct,
         paymentModalOpen,
         setPaymentModalOpen,
+        adminModalOpen,
+        setAdminModalOpen,
         aiModalOpen,
         setAiModalOpen,
         receiptOrder,
         setReceiptOrder,
         reviewProduct,
         setReviewProduct,
+
+        orders,
+        updateOrderStatus,
+        saveNewProduct,
+        savePromoCode,
+        saveStoreInfo,
 
         notifications,
         readNotificationIds,
@@ -540,9 +667,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         startCheckout,
         confirmPayment,
         cancelPayment,
+        manualApproveOrder,
 
         toasts,
-        showToast
+        showToast,
+        flyingParticles
       }}
     >
       {children}

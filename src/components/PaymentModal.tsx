@@ -12,6 +12,9 @@ export const PaymentModal: React.FC = () => {
     confirmPayment,
     orderStatus,
     approvalSecondsLeft,
+    currentOrder,
+    setAdminModalOpen,
+    manualApproveOrder,
     showToast
   } = useStore();
 
@@ -98,7 +101,7 @@ export const PaymentModal: React.FC = () => {
   const progressPercent = Math.max(0, (approvalSecondsLeft / 300) * 100);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
       <div className="bg-[#13131a] rounded-3xl overflow-hidden shadow-2xl shadow-purple-950/70 max-w-xl w-full border border-purple-900/40 relative max-h-[90vh] flex flex-col animate-[slideUpFade_0.3s_cubic-bezier(0.22,1,0.36,1)]">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-purple-900/40 flex items-center justify-between bg-gradient-to-r from-purple-950/70 via-purple-900/30 to-[#13131a] shrink-0">
@@ -107,7 +110,7 @@ export const PaymentModal: React.FC = () => {
               Secure Payment Gateway
             </h3>
             <p className="text-[11px] text-purple-400">
-              Total to Pay: <span className="font-black text-purple-300">{formatPKR(cartTotal)}</span>
+              Total: <span className="font-black text-purple-300">{formatPKR(cartTotal)}</span>
             </p>
           </div>
           <button
@@ -119,41 +122,64 @@ export const PaymentModal: React.FC = () => {
           </button>
         </div>
 
-        {/* Awaiting Admin Approval Banner */}
+        {/* Awaiting Admin Approval Banner with live 5-minute countdown */}
         {isSubmitted && (
           <div className="p-6 bg-gradient-to-b from-[#0a0a0f] to-[#1a0a2e] flex flex-col items-center justify-center border-b border-purple-900/40">
-            <div className="w-full max-w-sm bg-[#13131a] border-2 border-purple-800 rounded-3xl p-6 text-center shadow-xl shadow-purple-950/50 relative overflow-hidden">
+            <div className="w-full max-w-sm bg-[#13131a] border-2 border-purple-700 rounded-3xl p-6 text-center shadow-2xl shadow-purple-950/60 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 via-fuchsia-400 to-purple-600 animate-[awaitingShine_2.5s_linear_infinite]" />
 
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-700 to-fuchsia-500 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-purple-500/40 animate-[awaitingIconPulse_2s_ease-in-out_infinite]">
-                <i className="fa-solid fa-mobile-screen-button" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-700 via-purple-600 to-fuchsia-500 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-purple-500/50 animate-[awaitingIconPulse_2s_ease-in-out_infinite]">
+                <i className="fa-solid fa-clock-rotate-left" />
               </div>
 
-              <h4 className="text-base font-black text-white mb-1">
+              <h4 className="text-base sm:text-lg font-black text-white mb-1">
                 Awaiting Admin Approval
               </h4>
-              <p className="text-xs text-purple-300/90 font-medium mb-4 leading-relaxed">
-                Payment received. Admin will verify shortly.<br />Please wait...
+              <p className="text-xs text-purple-300/90 font-medium mb-3 leading-relaxed">
+                Payment received. Admin is verifying your proof.<br />
+                <span className="text-[11px] text-amber-300 font-bold">Only Admin Panel can approve this order.</span>
               </p>
 
-              {/* Timer */}
-              <div className="font-mono text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-300 to-purple-200 tracking-widest mb-3">
+              {/* Real-time countdown timer */}
+              <div className="font-mono text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-300 to-purple-200 tracking-widest mb-3">
                 {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
               </div>
 
               {/* Progress Bar */}
-              <div className="w-full h-1.5 bg-purple-950 rounded-full overflow-hidden mb-4">
+              <div className="w-full h-1.5 bg-purple-950 rounded-full overflow-hidden mb-4 border border-purple-800/40">
                 <div
                   className="h-full bg-gradient-to-r from-purple-600 via-purple-400 to-fuchsia-400 transition-all duration-1000 ease-linear shadow-[0_0_10px_rgba(168,85,247,0.6)]"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
 
-              {/* Dots */}
-              <div className="flex justify-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-[awaitingDotPulse_1.4s_ease-in-out_infinite]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-[awaitingDotPulse_1.4s_ease-in-out_infinite_0.2s]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-[awaitingDotPulse_1.4s_ease-in-out_infinite_0.4s]" />
+              {/* Pulsing Dots */}
+              <div className="flex justify-center gap-1.5 mb-5">
+                <span className="w-2 h-2 rounded-full bg-purple-500 animate-[awaitingDotPulse_1.4s_ease-in-out_infinite]" />
+                <span className="w-2 h-2 rounded-full bg-purple-500 animate-[awaitingDotPulse_1.4s_ease-in-out_infinite_0.2s]" />
+                <span className="w-2 h-2 rounded-full bg-purple-500 animate-[awaitingDotPulse_1.4s_ease-in-out_infinite_0.4s]" />
+              </div>
+
+              {/* Admin Panel Quick Trigger for Testing */}
+              <div className="pt-3 border-t border-purple-900/40 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAdminModalOpen(true)}
+                  className="w-full bg-purple-950 hover:bg-purple-900 text-purple-200 border border-purple-700/60 font-black text-xs py-2.5 rounded-xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition shadow-md"
+                >
+                  <i className="fa-solid fa-crown text-amber-400" />
+                  <span>Open Admin Panel (Approve Order)</span>
+                </button>
+
+                {currentOrder && (
+                  <button
+                    type="button"
+                    onClick={() => manualApproveOrder(currentOrder.id)}
+                    className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold underline cursor-pointer py-1"
+                  >
+                    ⚡ Quick Admin Verify (Demo Simulation)
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -275,9 +301,9 @@ export const PaymentModal: React.FC = () => {
           </div>
         ) : (
           /* Live Status Indicators */
-          <div className="p-5 sm:p-6">
+          <div className="p-5 sm:p-6 bg-[#0e0a17]">
             <label className="block text-xs font-black uppercase tracking-widest text-purple-400 mb-3 text-center">
-              Order Verification Status
+              Real-Time Verification State
             </label>
             <div className="grid grid-cols-2 gap-2.5">
               <div className={`status-badge ${orderStatus === 'pending' ? 'pending' : ''}`}>

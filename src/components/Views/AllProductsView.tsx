@@ -67,48 +67,52 @@ export const AllProductsView: React.FC = () => {
               <div
                 key={p.id}
                 onClick={() => setQuickViewProduct(p)}
-                className="bg-[#13131a] rounded-2xl overflow-hidden border border-purple-900/30 hover:border-purple-500 transition cursor-pointer flex flex-col justify-between shadow-md hover:-translate-y-1"
+                className="product-card-3d bg-[#13131a] rounded-2xl overflow-hidden border border-purple-900/40 cursor-pointer flex flex-col justify-between shadow-lg group"
               >
                 <div className="relative aspect-video sm:aspect-[4/3] bg-[#1a1a24] overflow-hidden">
                   <img
                     src={p.image}
                     alt={p.name}
-                    className="w-full h-full object-cover pointer-events-none hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover pointer-events-none group-hover:scale-110 transition-transform duration-500 ease-out"
                     loading="lazy"
                     draggable={false}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600';
+                    }}
                   />
                   {p.badge && (
-                    <span className="absolute top-2 left-2 px-2 py-0.5 text-[9px] font-black uppercase rounded bg-purple-600 text-white">
+                    <span className="absolute top-2 left-2 px-2 py-0.5 text-[9px] font-black uppercase rounded-md bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-md animate-pulse">
                       {p.badge}
                     </span>
                   )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#13131a] via-transparent to-transparent opacity-50" />
                 </div>
 
                 <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between">
                   <div>
-                    <h3 className="text-xs font-bold text-white line-clamp-2 mb-1.5 min-h-[30px]">
+                    <h3 className="text-xs sm:text-sm font-black text-white line-clamp-2 mb-1.5 min-h-[32px] group-hover:text-purple-300 transition-colors">
                       {p.name}
                     </h3>
-                    <div className="flex items-center gap-1 mb-2 text-[11px]">
+                    <div className="flex items-center gap-1.5 mb-2 text-[11px]">
                       <i className="fa-solid fa-star text-amber-400 text-[10px]" />
-                      <span className="text-purple-200 font-bold">{p.rating || 4.5}</span>
+                      <span className="text-purple-200 font-extrabold">{p.rating || 4.5}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-purple-900/20">
-                    <span className="text-sm font-black text-purple-300">
+                    <span className="text-sm sm:text-base font-black text-purple-300">
                       {formatPKR(p.price)}
                     </span>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        addToCart(p.id);
+                        addToCart(p.id, e);
                       }}
-                      className={`inline-flex items-center gap-1 text-[11px] font-bold py-1.5 px-3 rounded-lg border transition cursor-pointer ${
+                      className={`inline-flex items-center gap-1 text-[11px] font-extrabold py-1.5 px-3 rounded-xl border transition-all duration-200 cursor-pointer active:scale-90 ${
                         inCart
-                          ? 'bg-purple-600 text-white border-purple-500'
-                          : 'bg-[#1a1a24] text-purple-200 border-purple-900/60 hover:bg-purple-950'
+                          ? 'bg-purple-600 text-white border-purple-400 shadow-md shadow-purple-900/50'
+                          : 'bg-[#1a1a24] text-purple-200 border-purple-800/60 hover:bg-purple-900 hover:text-white hover:border-purple-400'
                       }`}
                     >
                       {inCart ? (

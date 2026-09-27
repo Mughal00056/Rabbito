@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from '../context/StoreContext';
 
 const LOGO_URL = 'https://i.supaimg.com/0ffab3ca-b15e-48fd-a213-7db2aa7158cc/bb9ac2b2-70ac-461a-b3d7-1d8aabf1a38c.jpg';
@@ -10,16 +10,28 @@ export const Header: React.FC = () => {
     setSearchSuggestionsOpen,
     setNotificationModalOpen,
     setCartDrawerOpen,
+    setAdminModalOpen,
     unreadNotificationCount,
-    cartCount
+    cartCount,
+    orders
   } = useStore();
+
+  const [cartBump, setCartBump] = useState(false);
+  const pendingOrdersCount = orders.filter((o) => o.status === 'pending').length;
+
+  useEffect(() => {
+    if (cartCount === 0) return;
+    setCartBump(true);
+    const timer = setTimeout(() => setCartBump(false), 450);
+    return () => clearTimeout(timer);
+  }, [cartCount]);
 
   return (
     <header className="bg-[#13131a]/95 backdrop-blur-md border-b border-purple-900/40 shadow-lg shadow-purple-950/20 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-3">
           {/* Left: Menu & Brand */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <button
               onClick={() => setSideMenuOpen(true)}
               className="relative p-2 text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 rounded-xl transition cursor-pointer"
@@ -53,6 +65,25 @@ export const Header: React.FC = () => {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Quick Admin Portal Button */}
+            <button
+              onClick={() => setAdminModalOpen(true)}
+              className="relative p-2 text-amber-400 hover:text-amber-300 hover:bg-amber-950/30 rounded-xl transition cursor-pointer flex items-center gap-1.5"
+              title="Admin Panel & Order Approvals"
+              aria-label="Open Admin Panel"
+            >
+              <i className="fa-solid fa-crown text-lg sm:text-xl" />
+              <span className="text-[11px] font-black uppercase tracking-wider hidden md:inline text-amber-300">
+                Admin
+              </span>
+              {pendingOrdersCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-[9px] font-black h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                  {pendingOrdersCount}
+                </span>
+              )}
+            </button>
+
+            {/* Search */}
             <button
               onClick={() => setSearchSuggestionsOpen(true)}
               className="p-2.5 text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 rounded-xl transition cursor-pointer"
@@ -61,6 +92,7 @@ export const Header: React.FC = () => {
               <i className="fa-solid fa-magnifying-glass text-xl" />
             </button>
 
+            {/* Notifications */}
             <button
               onClick={() => setNotificationModalOpen(true)}
               className="relative p-2.5 text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 rounded-xl transition cursor-pointer"
@@ -74,13 +106,21 @@ export const Header: React.FC = () => {
               )}
             </button>
 
+            {/* Cart with dynamic bump animation */}
             <button
+              id="headerCartBtn"
               onClick={() => setCartDrawerOpen(true)}
-              className="relative p-2.5 text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 rounded-xl transition cursor-pointer"
+              className={`relative p-2.5 text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 rounded-xl transition cursor-pointer ${
+                cartBump ? 'cart-badge-bump text-purple-200' : ''
+              }`}
               aria-label="View cart"
             >
               <i className="fa-solid fa-cart-shopping text-xl" />
-              <span className="absolute top-1 right-1 bg-purple-500 text-white text-[10px] font-extrabold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
+              <span
+                className={`absolute top-1 right-1 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white text-[10px] font-extrabold h-4 w-4 rounded-full flex items-center justify-center shadow-sm transition-transform ${
+                  cartBump ? 'scale-125' : 'scale-100'
+                }`}
+              >
                 {cartCount}
               </span>
             </button>

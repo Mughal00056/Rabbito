@@ -22,6 +22,8 @@ import { QuickViewModal } from './components/QuickViewModal';
 import { PaymentModal } from './components/PaymentModal';
 import { ReceiptModal } from './components/ReceiptModal';
 import { AIAssistantModal } from './components/AIAssistantModal';
+import { AdminModal } from './components/AdminModal';
+import { FlyingCartParticles } from './components/FlyingCartParticles';
 import { WhatsAppFloat } from './components/WhatsAppFloat';
 import { Toast } from './components/Toast';
 import { Footer } from './components/Footer';
@@ -38,7 +40,7 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-slate-200 flex flex-col font-sans selection:bg-purple-600 selection:text-white relative">
-      {/* Intro Splash Screen */}
+      {/* 3D Intro Splash Screen */}
       <Splash />
 
       {/* Global Navigation Header */}
@@ -67,7 +69,8 @@ const MainLayout: React.FC = () => {
       {/* Footer */}
       <Footer />
 
-      {/* Floating Elements & Drawers */}
+      {/* Floating Elements, Particles & Drawers */}
+      <FlyingCartParticles />
       <FloatingCart />
       <WhatsAppFloat />
       <SideMenu />
@@ -76,6 +79,7 @@ const MainLayout: React.FC = () => {
       <NotificationModal />
       <QuickViewModal />
       <PaymentModal />
+      <AdminModal />
       <ReceiptModal />
       <AIAssistantModal />
       <Toast />
