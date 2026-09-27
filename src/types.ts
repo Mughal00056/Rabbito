@@ -111,6 +111,16 @@ export interface TranscriptSettings {
   allowDownload?: boolean;
 }
 
+export interface ProductReview {
+  id: string;
+  productId: number;
+  userName: string;
+  rating: number; // 1 to 5
+  comment: string;
+  date: string;
+  verifiedPurchase?: boolean;
+}
+
 export interface LaunchConfig {
   mode: 'public' | 'private';
   autoLaunch: boolean;

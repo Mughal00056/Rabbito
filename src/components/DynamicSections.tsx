@@ -11,7 +11,8 @@ export const DynamicSections: React.FC = () => {
     openSectionAllView,
     setQuickViewProduct,
     addToCart,
-    cart
+    cart,
+    getProductRatingStats
   } = useStore();
 
   const filterProducts = (filter: string): Product[] => {
@@ -45,13 +46,14 @@ export const DynamicSections: React.FC = () => {
 
   const renderProductCard = (p: Product, isHorizontal: boolean) => {
     const inCart = cart.some((i) => i.id === p.id);
+    const stats = getProductRatingStats(p.id);
 
     if (isHorizontal) {
       return (
         <div
           key={p.id}
           onClick={() => setQuickViewProduct(p)}
-          className="product-card-3d min-w-[165px] max-w-[165px] sm:min-w-[180px] sm:max-w-[180px] shrink-0 bg-[#13131a] rounded-2xl overflow-hidden border border-purple-900/40 shadow-lg cursor-pointer flex flex-col justify-between group"
+          className="product-card-3d min-w-[165px] max-w-[165px] sm:min-w-[185px] sm:max-w-[185px] shrink-0 bg-[#13131a] rounded-2xl overflow-hidden border border-purple-900/40 shadow-lg cursor-pointer flex flex-col justify-between group"
         >
           <div className="relative w-full aspect-video overflow-hidden bg-[#1a1a24]">
             <img
@@ -72,17 +74,17 @@ export const DynamicSections: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-[#13131a] via-transparent to-transparent opacity-60" />
           </div>
 
-          <div className="p-3 flex flex-col flex-1 justify-between">
-            <div>
-              <div className="text-xs font-black text-white leading-snug mb-1 line-clamp-2 min-h-[32px] group-hover:text-purple-300 transition-colors">
+          <div className="p-3 flex flex-col flex-1 justify-between min-w-0">
+            <div className="min-w-0">
+              <div className="text-xs font-black text-white leading-snug mb-1 line-clamp-2 min-h-[32px] group-hover:text-purple-300 transition-colors break-words">
                 {p.name}
               </div>
               <div className="flex items-center gap-1.5 mb-1.5 text-[11px]">
                 <i className="fa-solid fa-star text-amber-400 text-[10px]" />
-                <span className="text-purple-200 font-extrabold">{p.rating || 4.5}</span>
-                <span className="text-purple-400/60 text-[10px]">({p.reviews || 0})</span>
+                <span className="text-purple-200 font-extrabold">{stats.average.toFixed(1)}</span>
+                <span className="text-purple-400/60 text-[10px]">({stats.count})</span>
               </div>
-              <div className="text-sm font-black text-purple-300 mb-2">
+              <div className="text-sm font-black text-purple-300 mb-2 truncate">
                 {formatPKR(p.price)}
               </div>
             </div>
@@ -121,7 +123,7 @@ export const DynamicSections: React.FC = () => {
       <div
         key={p.id}
         onClick={() => setQuickViewProduct(p)}
-        className="product-card-3d bg-[#13131a] rounded-2xl overflow-hidden border border-purple-900/40 shadow-lg cursor-pointer flex flex-col justify-between group"
+        className="product-card-3d bg-[#13131a] rounded-2xl overflow-hidden border border-purple-900/40 shadow-lg cursor-pointer flex flex-col justify-between group max-w-full"
       >
         <div className="relative w-full aspect-[3/4] overflow-hidden bg-[#1a1a24]">
           <img
@@ -142,17 +144,17 @@ export const DynamicSections: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-[#13131a] via-transparent to-transparent opacity-50" />
         </div>
 
-        <div className="p-3.5 flex flex-col flex-1 justify-between">
-          <div>
-            <div className="text-xs sm:text-sm font-black text-white leading-snug mb-1.5 line-clamp-2 min-h-[34px] group-hover:text-purple-300 transition-colors">
+        <div className="p-3.5 flex flex-col flex-1 justify-between min-w-0">
+          <div className="min-w-0">
+            <div className="text-xs sm:text-sm font-black text-white leading-snug mb-1.5 line-clamp-2 min-h-[34px] group-hover:text-purple-300 transition-colors break-words">
               {p.name}
             </div>
             <div className="flex items-center gap-1.5 mb-2 text-[11px]">
               <i className="fa-solid fa-star text-amber-400 text-[10px]" />
-              <span className="text-purple-200 font-extrabold">{p.rating || 4.5}</span>
-              <span className="text-purple-400/60 text-[10px]">({p.reviews || 0} reviews)</span>
+              <span className="text-purple-200 font-extrabold">{stats.average.toFixed(1)}</span>
+              <span className="text-purple-400/60 text-[10px]">({stats.count} reviews)</span>
             </div>
-            <div className="text-base font-black text-purple-300 mb-2.5">
+            <div className="text-base font-black text-purple-300 mb-2.5 truncate">
               {formatPKR(p.price)}
             </div>
           </div>
@@ -190,7 +192,7 @@ export const DynamicSections: React.FC = () => {
   if (activeCategory !== 'all') {
     const filtered = filterProducts(activeCategory);
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 section-fade-up">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-8 pb-16 section-fade-up w-full overflow-hidden">
         <div className="flex justify-between items-center px-1 mb-4">
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
             {activeCategory.toUpperCase()} PRODUCTS
@@ -202,7 +204,7 @@ export const DynamicSections: React.FC = () => {
             <p className="font-bold text-white">No products found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 mb-6 w-full">
             {filtered.map((p) => renderProductCard(p, false))}
           </div>
         )}
@@ -226,7 +228,7 @@ export const DynamicSections: React.FC = () => {
   }
 
   return (
-    <div className="pb-16">
+    <div className="pb-16 w-full overflow-hidden">
       {activeSections.map((section) => {
         const items = filterProducts(section.filter);
         if (items.length === 0) return null;
@@ -234,10 +236,10 @@ export const DynamicSections: React.FC = () => {
         const isHorizontal = section.layout === 'horizontal' || !section.layout;
 
         return (
-          <div key={section.id} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 section-fade-up">
+          <div key={section.id} className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-8 section-fade-up w-full">
             <div className="flex justify-between items-center px-1 mb-3.5">
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                <span className="w-1.5 h-5 bg-gradient-to-b from-purple-500 to-fuchsia-500 rounded-full" />
+              <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                <span className="w-1.5 h-4 sm:h-5 bg-gradient-to-b from-purple-500 to-fuchsia-500 rounded-full" />
                 <span>{section.title}</span>
               </h2>
               <button
@@ -245,16 +247,17 @@ export const DynamicSections: React.FC = () => {
                 onClick={() => openSectionAllView(section.filter, section.title)}
                 className="text-xs sm:text-sm font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1.5 transition cursor-pointer"
               >
-                View all <i className="fa-solid fa-arrow-right text-[11px]" />
+                <span>View all</span>
+                <i className="fa-solid fa-arrow-right text-[10px] sm:text-[11px]" />
               </button>
             </div>
 
             {isHorizontal ? (
-              <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scroll-smooth no-scrollbar">
+              <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scroll-smooth no-scrollbar max-w-full">
                 {items.map((p) => renderProductCard(p, true))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 mb-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 mb-5 w-full">
                 {items.map((p) => renderProductCard(p, false))}
               </div>
             )}

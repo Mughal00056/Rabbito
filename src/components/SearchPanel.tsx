@@ -76,32 +76,32 @@ export const SearchPanel: React.FC = () => {
     <div className="fixed inset-0 z-50 bg-[#0a0a0f] flex flex-col animate-[fadeIn_0.2s_ease-out]">
       {/* Top Search Bar */}
       <div className="p-3 sm:p-4 border-b border-purple-900/40 bg-[#13131a] sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <div className="flex-1 flex items-center gap-2.5 border-2 border-purple-800 rounded-xl px-3.5 py-2.5 bg-[#0a0a0f] shadow-inner focus-within:border-purple-400 transition">
-            <i className="fa-solid fa-magnifying-glass text-purple-400 text-sm" />
+        <div className="max-w-4xl mx-auto flex items-center gap-2 sm:gap-3 w-full min-w-0">
+          <div className="flex-1 min-w-0 flex items-center gap-2 sm:gap-2.5 border-2 border-purple-800 rounded-xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 bg-[#0a0a0f] shadow-inner focus-within:border-purple-400 transition">
+            <i className="fa-solid fa-magnifying-glass text-purple-400 text-sm shrink-0" />
             <input
               type="text"
               autoFocus
-              placeholder="Search products, brands, categories..."
+              placeholder="Search products, brands..."
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-              className="flex-1 text-sm sm:text-base font-semibold outline-none bg-transparent text-white placeholder-purple-600"
+              className="flex-1 min-w-0 text-xs sm:text-base font-semibold outline-none bg-transparent text-white placeholder-purple-600 truncate"
             />
             {inputVal && (
               <button
                 type="button"
                 onClick={() => setInputVal('')}
-                className="text-purple-400 hover:text-purple-300 p-1 cursor-pointer transition"
+                className="text-purple-400 hover:text-purple-300 p-1 cursor-pointer transition shrink-0"
               >
-                <i className="fa-solid fa-circle-xmark text-lg" />
+                <i className="fa-solid fa-circle-xmark text-base sm:text-lg" />
               </button>
             )}
-            <div className="w-px h-6 bg-purple-900/80 mx-1" />
+            <div className="w-px h-5 sm:h-6 bg-purple-900/80 mx-0.5 sm:mx-1 shrink-0" />
             <button
               type="button"
               onClick={handleSubmit}
-              className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider transition cursor-pointer"
+              className="bg-purple-600 hover:bg-purple-500 text-white px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider transition cursor-pointer shrink-0"
             >
               Search
             </button>
@@ -110,10 +110,10 @@ export const SearchPanel: React.FC = () => {
           <button
             type="button"
             onClick={() => setSearchSuggestionsOpen(false)}
-            className="p-2 text-purple-300 hover:text-white rounded-xl transition cursor-pointer"
+            className="p-1.5 sm:p-2 text-purple-300 hover:text-white rounded-xl transition cursor-pointer shrink-0"
             aria-label="Close search"
           >
-            <i className="fa-solid fa-xmark text-2xl" />
+            <i className="fa-solid fa-xmark text-xl sm:text-2xl" />
           </button>
         </div>
       </div>
@@ -216,7 +216,9 @@ export const SearchPanel: React.FC = () => {
                 <div className="w-16 h-16 rounded-2xl bg-[#13131a] p-1 border border-purple-900/60 mx-auto mb-3 flex items-center justify-center opacity-80">
                   <img src={LOGO_URL} alt="ApexStore" className="w-full h-full object-cover rounded-xl" />
                 </div>
-                <p className="font-bold text-white text-sm">No products found for "{trimmed}"</p>
+                <p className="font-bold text-white text-sm max-w-sm mx-auto break-words">
+                  No products found for <span className="text-purple-300 font-mono break-all">"{trimmed}"</span>
+                </p>
                 <p className="text-xs text-purple-400/70 mt-1">Try another keyword or browse our categories!</p>
               </div>
             )}
