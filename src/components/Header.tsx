@@ -65,24 +65,6 @@ export const Header: React.FC = () => {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Quick Admin Portal Button */}
-            <button
-              onClick={() => setAdminModalOpen(true)}
-              className="relative p-2 text-amber-400 hover:text-amber-300 hover:bg-amber-950/30 rounded-xl transition cursor-pointer flex items-center gap-1.5"
-              title="Admin Panel & Order Approvals"
-              aria-label="Open Admin Panel"
-            >
-              <i className="fa-solid fa-crown text-lg sm:text-xl" />
-              <span className="text-[11px] font-black uppercase tracking-wider hidden md:inline text-amber-300">
-                Admin
-              </span>
-              {pendingOrdersCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-[9px] font-black h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center shadow-md animate-bounce">
-                  {pendingOrdersCount}
-                </span>
-              )}
-            </button>
-
             {/* Search */}
             <button
               onClick={() => setSearchSuggestionsOpen(true)}

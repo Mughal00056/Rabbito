@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { formatPKR } from '../../utils/helpers';
+
+const LOGO_URL = 'https://i.supaimg.com/0ffab3ca-b15e-48fd-a213-7db2aa7158cc/bb9ac2b2-70ac-461a-b3d7-1d8aabf1a38c.jpg';
 
 export const SearchResultsView: React.FC = () => {
   const {
@@ -13,6 +15,16 @@ export const SearchResultsView: React.FC = () => {
     cart,
     setSearchSuggestionsOpen
   } = useStore();
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Subtle loading transition when search changes
+  useEffect(() => {
+    if (!searchQuery) return;
+    setIsLoading(true);
+    const timer = setTimeout(() => setIsLoading(false), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const query = searchQuery.toLowerCase().trim();
 
@@ -71,10 +83,28 @@ export const SearchResultsView: React.FC = () => {
         </button>
       </div>
 
-      {/* Results Grid */}
-      {results.length === 0 ? (
+      {/* Loading Screen with Logo PNG */}
+      {isLoading ? (
+        <div className="py-24 flex flex-col items-center justify-center text-center animate-[fadeIn_0.15s_ease-out]">
+          <div className="relative mb-5">
+            <div className="w-20 h-20 rounded-2xl bg-[#13131a] p-1 border-2 border-purple-500/60 shadow-[0_0_35px_rgba(168,85,247,0.6)] flex items-center justify-center overflow-hidden animate-pulse">
+              <img
+                src={LOGO_URL}
+                alt="ApexStore"
+                className="w-full h-full object-cover rounded-xl"
+                draggable={false}
+              />
+            </div>
+            <div className="absolute -inset-2.5 rounded-3xl border border-purple-400/40 animate-ping pointer-events-none" />
+          </div>
+          <div className="text-sm font-black text-white">Loading ApexStore Results...</div>
+          <p className="text-xs text-purple-400/70 mt-1">Filtering products in real time</p>
+        </div>
+      ) : results.length === 0 ? (
         <div className="py-20 text-center text-purple-400">
-          <i className="fa-solid fa-box-open text-5xl mb-3 text-purple-500" />
+          <div className="w-16 h-16 rounded-2xl bg-[#13131a] p-1 border border-purple-900/60 mx-auto mb-3 flex items-center justify-center opacity-80">
+            <img src={LOGO_URL} alt="ApexStore" className="w-full h-full object-cover rounded-xl" />
+          </div>
           <p className="font-bold text-white text-base">No products found</p>
           <p className="text-xs text-purple-400/80 mt-1">Try another search keyword or check our categories.</p>
         </div>

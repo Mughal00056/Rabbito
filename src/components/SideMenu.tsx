@@ -69,23 +69,6 @@ export const SideMenu: React.FC = () => {
             <span>Home</span>
           </button>
 
-          {/* Admin Panel Button */}
-          <button
-            onClick={() => {
-              setAdminModalOpen(true);
-              setSideMenuOpen(false);
-            }}
-            className="w-full relative flex items-center gap-3.5 px-5 py-3.5 text-sm font-black bg-gradient-to-r from-amber-950/40 via-purple-950/60 to-purple-900/40 text-amber-300 hover:text-amber-200 transition text-left cursor-pointer border-b border-purple-950/40"
-          >
-            <i className="fa-solid fa-crown w-5 text-center text-amber-400 animate-pulse" />
-            <span>Admin Portal (Approvals)</span>
-            {pendingCount > 0 && (
-              <span className="ml-auto bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-full animate-bounce">
-                {pendingCount} PENDING
-              </span>
-            )}
-          </button>
-
           <button
             onClick={() => {
               setAiModalOpen(true);

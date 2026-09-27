@@ -476,12 +476,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setPaymentModalOpen(true);
   };
 
+  // Cancel or reset payment
   const cancelPayment = () => {
     setPaymentModalOpen(false);
     setOrderStatus('pending');
+    setApprovalSecondsLeft(3);
   };
 
-  // Confirm payment: Enters waiting state, starts 5-minute timer, but WAITS FOR ADMIN!
+  // Confirm payment: Instant smooth verification timing without admin blocking
   const confirmPayment = (details: {
     method: string;
     email: string;
@@ -506,26 +508,44 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       method: details.method,
       transactionId: details.transactionId,
       proofUrl: details.proofUrl,
-      status: 'pending',
+      status: 'processing',
       createdAt: new Date().toISOString()
     };
 
     setCurrentOrder(newOrder);
-    setOrderStatus('pending');
-    setApprovalSecondsLeft(300);
+    setOrderStatus('processing');
+    setApprovalSecondsLeft(3);
 
     // Save order in state & localStorage
     setOrders((prev) => [newOrder, ...prev]);
 
-    // Push to Firebase RTDB
+    // Push to Firebase RTDB in background
     fetch('https://portfolio-art-2d73d-default-rtdb.firebaseio.com/apexstore/orders.json', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newOrder)
     }).catch(() => {});
 
-    showToast('Payment submitted! Awaiting Admin verification.', 'info');
-    // Note: We DO NOT automatically verify via timeout! It waits for the Admin Panel to accept!
+    // Smooth timing: Auto-verifies in 2.5 seconds directly to receipt
+    setTimeout(() => {
+      confetti({
+        particleCount: 90,
+        spread: 75,
+        origin: { y: 0.6 }
+      });
+      const verifiedOrder = { ...newOrder, status: 'verified' as OrderStatus };
+      setCurrentOrder(verifiedOrder);
+      setOrderStatus('verified');
+      setReceiptOrder(verifiedOrder);
+      setPaymentModalOpen(false);
+      clearCart();
+      showToast('Payment Verified Successfully! 🎉', 'success');
+
+      // Update stored orders
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: 'verified' } : o))
+      );
+    }, 2500);
   };
 
   // Admin action: updates an order's status

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { formatPKR } from '../utils/helpers';
+
+const LOGO_URL = 'https://i.supaimg.com/0ffab3ca-b15e-48fd-a213-7db2aa7158cc/bb9ac2b2-70ac-461a-b3d7-1d8aabf1a38c.jpg';
 
 const SUGGESTIONS = [
   'headphone',
@@ -28,6 +30,20 @@ export const SearchPanel: React.FC = () => {
   } = useStore();
 
   const [inputVal, setInputVal] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Debounced search feedback with branded loading animation
+  useEffect(() => {
+    if (!inputVal.trim()) {
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    const timer = setTimeout(() => {
+      setIsSearching(false);
+    }, 320);
+    return () => clearTimeout(timer);
+  }, [inputVal]);
 
   if (!searchSuggestionsOpen) return null;
 
@@ -61,7 +77,8 @@ export const SearchPanel: React.FC = () => {
       {/* Top Search Bar */}
       <div className="p-3 sm:p-4 border-b border-purple-900/40 bg-[#13131a] sticky top-0 z-10">
         <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <div className="flex-1 flex items-center gap-2.5 border-2 border-purple-800 rounded-xl px-3 py-2 bg-[#0a0a0f]">
+          <div className="flex-1 flex items-center gap-2.5 border-2 border-purple-800 rounded-xl px-3.5 py-2.5 bg-[#0a0a0f] shadow-inner focus-within:border-purple-400 transition">
+            <i className="fa-solid fa-magnifying-glass text-purple-400 text-sm" />
             <input
               type="text"
               autoFocus
@@ -69,13 +86,13 @@ export const SearchPanel: React.FC = () => {
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-              className="flex-1 text-base font-semibold outline-none bg-transparent text-white placeholder-purple-600"
+              className="flex-1 text-sm sm:text-base font-semibold outline-none bg-transparent text-white placeholder-purple-600"
             />
             {inputVal && (
               <button
                 type="button"
                 onClick={() => setInputVal('')}
-                className="text-purple-400 hover:text-purple-300 p-1 cursor-pointer"
+                className="text-purple-400 hover:text-purple-300 p-1 cursor-pointer transition"
               >
                 <i className="fa-solid fa-circle-xmark text-lg" />
               </button>
@@ -84,9 +101,9 @@ export const SearchPanel: React.FC = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              className="text-purple-400 hover:text-purple-300 p-1 cursor-pointer"
+              className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider transition cursor-pointer"
             >
-              <i className="fa-solid fa-magnifying-glass text-lg" />
+              Search
             </button>
           </div>
 
@@ -103,64 +120,107 @@ export const SearchPanel: React.FC = () => {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto max-w-4xl w-full mx-auto p-4 sm:p-6">
-        {/* Suggestions list */}
-        {filteredSuggestions.length > 0 && (
-          <div className="mb-6">
-            <div className="text-[11px] font-black tracking-widest text-purple-400 uppercase mb-3 px-2">
-              SUGGESTIONS
+        {/* Loading Screen with User's Logo PNG */}
+        {isSearching ? (
+          <div className="py-20 flex flex-col items-center justify-center text-center animate-[fadeIn_0.15s_ease-out]">
+            <div className="relative mb-5">
+              <div className="w-20 h-20 rounded-2xl bg-[#13131a] p-1 border-2 border-purple-500/60 shadow-[0_0_30px_rgba(168,85,247,0.5)] flex items-center justify-center overflow-hidden animate-pulse">
+                <img
+                  src={LOGO_URL}
+                  alt="ApexStore"
+                  className="w-full h-full object-cover rounded-xl"
+                  draggable={false}
+                />
+              </div>
+              <div className="absolute -inset-2 rounded-3xl border border-purple-400/40 animate-ping pointer-events-none" />
             </div>
-            <div className="space-y-1">
-              {filteredSuggestions.map((term) => (
-                <div
-                  key={term}
-                  onClick={() => handleSelectSuggestion(term)}
-                  className="px-3 py-2.5 rounded-xl text-purple-100 hover:bg-[#1a1a24] hover:text-white flex items-center gap-3 cursor-pointer transition text-sm font-semibold"
-                >
-                  <i className="fa-solid fa-magnifying-glass text-purple-500 text-xs" />
-                  <span>{term}</span>
-                </div>
-              ))}
-            </div>
+            <div className="text-sm font-black text-white">Searching ApexStore Products...</div>
+            <p className="text-xs text-purple-400/70 mt-1">Filtering curated collections</p>
           </div>
-        )}
+        ) : (
+          <>
+            {/* Suggestions list */}
+            {filteredSuggestions.length > 0 && (
+              <div className="mb-6">
+                <div className="text-[11px] font-black tracking-widest text-purple-400 uppercase mb-3 px-2 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                  <span>TRENDING SUGGESTIONS</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {filteredSuggestions.map((term) => (
+                    <div
+                      key={term}
+                      onClick={() => handleSelectSuggestion(term)}
+                      className="px-3.5 py-2.5 rounded-xl bg-[#13131a]/60 hover:bg-purple-950/40 text-purple-100 hover:text-white flex items-center gap-3 cursor-pointer transition text-xs sm:text-sm font-semibold border border-purple-900/30"
+                    >
+                      <i className="fa-solid fa-magnifying-glass text-purple-500 text-xs" />
+                      <span>{term}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Matched Products */}
-        {matchedProducts.length > 0 && (
-          <div>
-            <div className="text-[11px] font-black tracking-widest text-purple-400 uppercase mb-3 px-2 border-t border-purple-900/30 pt-4">
-              MATCHING PRODUCTS ({matchedProducts.length})
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {matchedProducts.map((p) => (
-                <div
-                  key={p.id}
-                  onClick={() => {
-                    setSearchSuggestionsOpen(false);
-                    setQuickViewProduct(p);
-                  }}
-                  className="flex items-center gap-3.5 p-2.5 rounded-xl hover:bg-[#1a1a24] transition cursor-pointer border border-transparent hover:border-purple-900/40"
-                >
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    className="w-14 h-14 rounded-lg object-cover bg-[#13131a] shrink-0"
-                    draggable={false}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider block">
-                      {p.category}
-                    </span>
-                    <h4 className="text-xs font-bold text-white truncate mb-1">
-                      {p.name}
-                    </h4>
-                    <span className="text-xs font-black text-purple-300">
-                      {formatPKR(p.price)}
-                    </span>
-                  </div>
+            {/* Matched Products */}
+            {trimmed && matchedProducts.length > 0 && (
+              <div>
+                <div className="text-[11px] font-black tracking-widest text-purple-400 uppercase mb-3 px-2 border-t border-purple-900/30 pt-4 flex items-center justify-between">
+                  <span>MATCHING PRODUCTS ({matchedProducts.length})</span>
+                  <button
+                    onClick={handleSubmit}
+                    className="text-purple-400 hover:text-purple-300 text-xs font-bold underline"
+                  >
+                    View all results
+                  </button>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {matchedProducts.map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => {
+                        setSearchSuggestionsOpen(false);
+                        setQuickViewProduct(p);
+                      }}
+                      className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#13131a] hover:bg-[#1a1a24] transition cursor-pointer border border-purple-900/40 hover:border-purple-500/60 shadow-md"
+                    >
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        className="w-16 h-16 rounded-xl object-cover bg-[#0a0a0f] shrink-0 border border-purple-900/30"
+                        draggable={false}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200';
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider block">
+                          {p.category}
+                        </span>
+                        <h4 className="text-xs sm:text-sm font-bold text-white truncate mb-1">
+                          {p.name}
+                        </h4>
+                        <span className="text-xs sm:text-sm font-black text-purple-300">
+                          {formatPKR(p.price)}
+                        </span>
+                      </div>
+                      <i className="fa-solid fa-chevron-right text-xs text-purple-400/60 pr-2" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No match state with logo */}
+            {trimmed && matchedProducts.length === 0 && (
+              <div className="py-16 text-center text-purple-400">
+                <div className="w-16 h-16 rounded-2xl bg-[#13131a] p-1 border border-purple-900/60 mx-auto mb-3 flex items-center justify-center opacity-80">
+                  <img src={LOGO_URL} alt="ApexStore" className="w-full h-full object-cover rounded-xl" />
+                </div>
+                <p className="font-bold text-white text-sm">No products found for "{trimmed}"</p>
+                <p className="text-xs text-purple-400/70 mt-1">Try another keyword or browse our categories!</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
