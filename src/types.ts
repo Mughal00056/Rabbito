@@ -121,6 +121,16 @@ export interface ProductReview {
   verifiedPurchase?: boolean;
 }
 
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  avatar?: string;
+  createdAt: string;
+  role?: 'user' | 'admin';
+}
+
 export interface LaunchConfig {
   mode: 'public' | 'private';
   autoLaunch: boolean;

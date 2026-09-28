@@ -14,12 +14,19 @@ export const SideMenu: React.FC = () => {
     setAdminModalOpen,
     unreadNotificationCount,
     storeInfo,
-    orders
+    orders,
+    currentUser,
+    openSignIn,
+    openSignUp,
+    logout,
+    setReceiptOrder
   } = useStore();
 
   if (!sideMenuOpen) return null;
 
-  const pendingCount = orders.filter((o) => o.status === 'pending').length;
+  const userOrders = currentUser
+    ? orders.filter((o) => o.email.toLowerCase() === currentUser.email.toLowerCase())
+    : [];
 
   return (
     <>
@@ -32,7 +39,7 @@ export const SideMenu: React.FC = () => {
       {/* Drawer */}
       <aside className="fixed top-0 left-0 bottom-0 w-80 max-w-[88vw] bg-[#13131a] z-50 shadow-2xl shadow-purple-950/60 flex flex-col border-r border-purple-900/30 animate-[slideRight_0.3s_cubic-bezier(0.34,1.56,0.64,1)]">
         {/* Header */}
-        <div className="p-5 border-b border-purple-900/40 flex items-center justify-between bg-gradient-to-r from-purple-950/50 via-purple-900/20 to-transparent">
+        <div className="p-4 sm:p-5 border-b border-purple-900/40 flex items-center justify-between bg-gradient-to-r from-purple-950/50 via-purple-900/20 to-transparent">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#0a0a0f] text-white flex items-center justify-center shadow border border-purple-500/40 overflow-hidden">
               <img
@@ -54,6 +61,64 @@ export const SideMenu: React.FC = () => {
           >
             <i className="fa-solid fa-xmark text-lg" />
           </button>
+        </div>
+
+        {/* User Account Quick Section */}
+        <div className="p-3.5 bg-[#0d071b] border-b border-purple-900/40">
+          {currentUser ? (
+            <div className="p-3 rounded-2xl bg-[#161622] border border-purple-800/40">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-fuchsia-600 flex items-center justify-center text-white font-black text-sm shadow">
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-black text-white truncate">{currentUser.name}</p>
+                  <p className="text-[10px] text-purple-300/70 truncate">{currentUser.email}</p>
+                  <span className="inline-block mt-0.5 text-[9px] font-black text-emerald-400 uppercase tracking-widest">
+                    ● {currentUser.role === 'admin' ? 'Founder & Admin' : 'Verified Member'}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-2.5 pt-2 border-t border-purple-950 flex items-center justify-between text-xs">
+                {userOrders.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setReceiptOrder(userOrders[userOrders.length - 1]);
+                      setSideMenuOpen(false);
+                    }}
+                    className="text-[10px] font-bold text-purple-300 hover:text-white underline cursor-pointer"
+                  >
+                    View Last Order
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    logout();
+                    setSideMenuOpen(false);
+                  }}
+                  className="text-[10px] font-bold text-red-400 hover:text-red-300 ml-auto flex items-center gap-1 cursor-pointer"
+                >
+                  <i className="fa-solid fa-arrow-right-from-bracket text-[9px]" /> Sign Out
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-purple-950/60 to-purple-900/30 border border-purple-800/40 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-black text-white">Join ApexStore</p>
+                <p className="text-[10px] text-purple-300/80">Sign in to track orders & perks</p>
+              </div>
+              <button
+                onClick={() => {
+                  setSideMenuOpen(false);
+                  openSignIn();
+                }}
+                className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-black uppercase tracking-wider transition cursor-pointer shadow-md"
+              >
+                Sign In
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Menu Items */}
@@ -141,7 +206,7 @@ export const SideMenu: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="p-5 border-t border-purple-900/30 text-center bg-[#0a0a0f]">
+        <div className="p-4 border-t border-purple-900/30 text-center bg-[#0a0a0f]">
           <p className="text-[11px] text-purple-400/80 font-medium">© 2026 ApexStore Inc. All rights reserved.</p>
         </div>
       </aside>

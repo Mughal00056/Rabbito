@@ -13,7 +13,8 @@ import {
   Order,
   OrderStatus,
   LaunchConfig,
-  ProductReview
+  ProductReview,
+  UserProfile
 } from '../types';
 import {
   INITIAL_PRODUCTS,
@@ -146,6 +147,18 @@ interface StoreContextType {
   cancelPayment: () => void;
   manualApproveOrder: (orderId: number) => void;
 
+  // Authentication & User Profile
+  currentUser: UserProfile | null;
+  authModalOpen: boolean;
+  setAuthModalOpen: (open: boolean) => void;
+  authModalMode: 'signin' | 'signup';
+  setAuthModalMode: (mode: 'signin' | 'signup') => void;
+  openSignIn: () => void;
+  openSignUp: () => void;
+  login: (email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (name: string, email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => void;
+
   // Toast & Flying Animation
   toasts: ToastMessage[];
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -160,6 +173,8 @@ const LOCAL_STORAGE_NOTIFS = 'apex_notifications';
 const LOCAL_STORAGE_READ_NOTIFS = 'apex_read_notifs';
 const LOCAL_STORAGE_REVIEWS = 'apex_product_reviews';
 const LOCAL_STORAGE_PRODUCTS = 'apex_products_catalog';
+const LOCAL_STORAGE_CURRENT_USER = 'apex_current_user';
+const LOCAL_STORAGE_USERS = 'apex_registered_users';
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Navigation State
@@ -234,6 +249,140 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [aiModalOpen, setAiModalOpen] = useState<boolean>(false);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
   const [reviewProduct, setReviewProduct] = useState<Product | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
+
+  // Registered Users (Persisted)
+  const [registeredUsers, setRegisteredUsers] = useState<UserProfile[]>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_USERS);
+      if (saved) return JSON.parse(saved);
+      const initialUsers: UserProfile[] = [
+        {
+          id: 'u_admin',
+          name: 'Apex Founder',
+          email: 'founderofapexstore@gmail.com',
+          password: 'password123',
+          role: 'admin',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'u_vip',
+          name: 'Zain Malik',
+          email: 'customer@apexstore.io',
+          password: 'password123',
+          role: 'user',
+          createdAt: new Date().toISOString()
+        }
+      ];
+      localStorage.setItem(LOCAL_STORAGE_USERS, JSON.stringify(initialUsers));
+      return initialUsers;
+    } catch {
+      return [];
+    }
+  });
+
+  // Current Logged-in User
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_CURRENT_USER);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const openSignIn = () => {
+    setAuthModalMode('signin');
+    setAuthModalOpen(true);
+  };
+
+  const openSignUp = () => {
+    setAuthModalMode('signup');
+    setAuthModalOpen(true);
+  };
+
+  const login = async (email: string, password?: string): Promise<{ success: boolean; error?: string }> => {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = password?.trim() || '';
+
+    if (!cleanEmail) {
+      return { success: false, error: 'Please enter your email address.' };
+    }
+
+    const matched = registeredUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+    if (!matched) {
+      if (cleanEmail && cleanPass.length >= 4) {
+        // Auto-register seamless experience
+        const newUser: UserProfile = {
+          id: `u_${Date.now()}`,
+          name: cleanEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+          email: cleanEmail,
+          password: cleanPass,
+          role: cleanEmail.includes('founder') || cleanEmail.includes('admin') ? 'admin' : 'user',
+          createdAt: new Date().toISOString()
+        };
+        const updated = [...registeredUsers, newUser];
+        setRegisteredUsers(updated);
+        localStorage.setItem(LOCAL_STORAGE_USERS, JSON.stringify(updated));
+        setCurrentUser(newUser);
+        localStorage.setItem(LOCAL_STORAGE_CURRENT_USER, JSON.stringify(newUser));
+        return { success: true };
+      }
+      return { success: false, error: 'Account not found. Please click Sign Up.' };
+    }
+
+    if (matched.password && cleanPass && matched.password !== cleanPass) {
+      return { success: false, error: 'Incorrect password. Please try again.' };
+    }
+
+    setCurrentUser(matched);
+    localStorage.setItem(LOCAL_STORAGE_CURRENT_USER, JSON.stringify(matched));
+    return { success: true };
+  };
+
+  const signup = async (name: string, email: string, password?: string): Promise<{ success: boolean; error?: string }> => {
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = password?.trim() || '';
+
+    if (!cleanName) {
+      return { success: false, error: 'Please enter your full name.' };
+    }
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, error: 'Please enter a valid email address.' };
+    }
+    if (cleanPass.length < 4) {
+      return { success: false, error: 'Password must be at least 4 characters.' };
+    }
+
+    const exists = registeredUsers.some((u) => u.email.toLowerCase() === cleanEmail);
+    if (exists) {
+      return { success: false, error: 'An account with this email already exists. Please sign in.' };
+    }
+
+    const newUser: UserProfile = {
+      id: `u_${Date.now()}`,
+      name: cleanName,
+      email: cleanEmail,
+      password: cleanPass,
+      role: cleanEmail.includes('founder') || cleanEmail.includes('admin') ? 'admin' : 'user',
+      createdAt: new Date().toISOString()
+    };
+
+    const updated = [...registeredUsers, newUser];
+    setRegisteredUsers(updated);
+    localStorage.setItem(LOCAL_STORAGE_USERS, JSON.stringify(updated));
+    setCurrentUser(newUser);
+    localStorage.setItem(LOCAL_STORAGE_CURRENT_USER, JSON.stringify(newUser));
+
+    return { success: true };
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem(LOCAL_STORAGE_CURRENT_USER);
+  };
 
   // Notifications State (Persisted)
   const [notifications, setNotifications] = useState<StoreNotification[]>(() => {
@@ -402,23 +551,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const discountAmount = cartSubtotal * appliedDiscount;
   const cartTotal = Math.max(0, cartSubtotal - discountAmount);
 
-  // Trigger Flying particle to cart icon
-  const triggerFlyParticle = (x: number, y: number, image: string) => {
-    const id = Date.now().toString() + Math.random().toString();
-    setFlyingParticles((prev) => [...prev, { id, x, y, image }]);
-    setTimeout(() => {
-      setFlyingParticles((prev) => prev.filter((p) => p.id !== id));
-    }, 750);
+  // Trigger Flying particle to cart icon (kept silent to prevent overlay bouncing)
+  const triggerFlyParticle = (_x: number, _y: number, _image: string) => {
+    // Silenced to ensure zero overlay bouncing or intrusive screen-wide animations
   };
 
-  // Add to cart with optional flying animation
-  const addToCart = (productId: number, event?: React.MouseEvent) => {
+  // Add to cart with silent smooth animation
+  const addToCart = (productId: number, _event?: React.MouseEvent) => {
     const product = products.find((p) => p.id === productId);
     if (!product) return;
-
-    if (event) {
-      triggerFlyParticle(event.clientX, event.clientY, product.image);
-    }
 
     setCart((prev) => {
       const existing = prev.find((item) => item.id === productId);
@@ -429,7 +570,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       return [...prev, { ...product, quantity: 1 }];
     });
-    showToast(`Added ${product.name} to cart`);
+    // Deliberately silenced (no toast notification panel shown) for clean, smooth interaction
   };
 
   const updateCartQty = (productId: number, delta: number) => {
@@ -792,6 +933,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         confirmPayment,
         cancelPayment,
         manualApproveOrder,
+
+        // Authentication & User Profile
+        currentUser,
+        authModalOpen,
+        setAuthModalOpen,
+        authModalMode,
+        setAuthModalMode,
+        openSignIn,
+        openSignUp,
+        login,
+        signup,
+        logout,
 
         toasts,
         showToast,
